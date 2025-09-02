@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Servicio de Base de Datos MySQL
+  db:
+    image: mysql:5.7
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: myflaskapp
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - microservices-net
+  # Consul
+
+  consul:
+    image: consul:1.15.4
+    container_name: consul_server
+    ports:
+      - "8500:8500"  # Puerto para la Interfaz de Usuario (UI) de Consul
+      - "8600:8600/udp" # Puerto para el DNS de Consul
+    command: "agent -server -bootstrap-expect=1 -ui -client=0.0.0.0"
+    networks:
+      - microservices-net
+
+  # Microservicio de Usuarios
+  users:
+    build: ./microUsers
+    container_name: microservice_users
+    restart: on-failure
+    ports:
+      - "5001:5001"
+    depends_on:
+      - db
+      - consul
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DB=myflaskapp
+    networks:
+      - microservices-net
+    command: python run.py
+
+  # Microservicio de Productos
+  products:
+    build: ./microProducts
+    container_name: microservice_products
+    restart: on-failure
+    ports:
+      - "5002:5002"
+    depends_on:
+      - db
+      - consul
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DB=myflaskapp
+    networks:
+      - microservices-net
+    command: python run.py
+
+  # Microservicio de Órdenes
+  orders:
+    build: ./microOrders
+    container_name: microservice_orders
+    restart: on-failure
+    ports:
+      - "5003:5003"
+    depends_on:
+      - db
+      - products
+      - consul
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DB=myflaskapp
+      # Aquí le decimos al servicio de órdenes cómo encontrar al de productos
+      - PRODUCT_SERVICE_URL=http://products:5002
+    networks:
+      - microservices-net
+    command: python run.py
+
+  frontend:
+    build: ./frontend
+    container_name: frontend_service
+    ports:
+      - "5000:5000" # El frontend será accesible desde el exterior en el puerto 5000
+    environment:
+      # URLs de los servicios backend, usando los nombres de servicio de Docker
+      - USERS_API_URL=http://users:5001
+      - PRODUCTS_API_URL=http://products:5002
+      - ORDERS_API_URL=http://orders:5003
+    networks:
+      - microservices-net
+    depends_on:
+      - users
+      - products
+      - orders
+      - consul
+# Definir la red
+networks:
+  microservices-net:
+    driver: bridge

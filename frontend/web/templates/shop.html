@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tienda</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="/shop">Mini Store</a>
+  <div class="collapse navbar-collapse">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="/my-orders">Mis Órdenes</a>
+      </li>
+    </ul>
+    <span class="navbar-text text-white mr-3" id="welcome-user"></span>
+    <button class="btn btn-outline-danger" id="logout-btn">Logout</button>
+  </div>
+</nav>
+
+<div class="container mt-4">
+    <h2>Productos Disponibles</h2>
+    <div id="product-list" class="row">
+        <!-- Los productos se cargarán aquí dinámicamente -->
+    </div>
+    <hr>
+    <h2>Carrito de Compras</h2>
+    <div id="cart-items">
+        <!-- Items del carrito se mostrarán aquí -->
+    </div>
+    <p class="font-weight-bold">Total: $<span id="cart-total">0.00</span></p>
+    <button class="btn btn-primary" id="order-btn" disabled>Realizar Pedido</button>
+</div>
+
+<script src="/static/shop.js"></script>
+<script src="/static/auth.js"></script>
+</body>
+</html>
